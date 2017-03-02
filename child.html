@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<meta charset='utf-8'>
+
+<link href='node_modules/bootstrap/dist/css/bootstrap.css' rel='stylesheet'/>
+<script src='node_modules/jquery/dist/jquery.js'></script>
+<script src='node_modules/bootstrap/dist/js/bootstrap.js'></script>
+
+<style>
+li a {
+  cursor: move; /* fallback if grab cursor is unsupported */
+  cursor: grab;
+  cursor: -moz-grab;
+  cursor: -webkit-grab;
+}
+.over {
+  background-color: red;
+}
+</style>
+
+<h1>Hello World!</h2>
+<div class='tabs'>
+  <ul class='nav nav-tabs' role='tablist'></ul>
+  <div class='tab-content'></div>
+</div>
+
+<script src='child.js'></script>

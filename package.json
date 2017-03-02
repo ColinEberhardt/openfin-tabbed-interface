@@ -1,0 +1,20 @@
+{
+  "name": "openfin-tabbed-interface",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "serve": "live-server --port=8080 --no-browser",
+    "launch": "openfin --launch --config http://localhost:8080/app.json"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bootstrap": "^3.3.7",
+    "jquery": "^3.1.1",
+    "openfin-cli": "^1.1.5"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.0"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "startup_app": {
+    "name": "Tabbed Browser Demo",
+    "uuid": "TabbedBrowser",
+    "url": "http://localhost:8080/parent.html",
+    "autoShow": true
+  },
+  "runtime": {
+    "version": "stable"
+  }
+}
