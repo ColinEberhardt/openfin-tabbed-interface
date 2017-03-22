@@ -16,6 +16,9 @@ main(() => {
     // if we have no tabs left, close this window
     if ($('.nav-tabs li').length === 0) {
       window.close();
+    } else if ($('.nav-tabs li.active').length === 0) {
+      // ensure that at least one tab is selected
+      $('.nav-tabs li:first-child').tab('show');
     }
   });
 
