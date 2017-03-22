@@ -1,44 +1,39 @@
-const { main, Window, Application, InterApplicationBus } = fin.desktop;
+/* globals adaptBus createTab createTabContent fin consolidateDragEvents */
 
+const { main, Window, Application } = fin.desktop;
 
 main(() => {
   const application = Application.getCurrent();
   const window = Window.getCurrent();
 
-  window.getOptions(({customData}) => {
-    renderModel(customData);
-  });
-
   const {send, subscribe} = adaptBus(application.uuid, window.name);
 
   subscribe('removeTab', (message) => {
-      // remove from this model
-      $(`.nav-tabs li[data-target='#${message.model.id}']`).remove();
-      $(`.tab-content div[id='${message.model.id}']`).remove();
+    // remove from this model
+    $(`.nav-tabs li[data-target='#${message.model.id}']`).remove();
+    $(`.tab-content div[id='${message.model.id}']`).remove();
 
-      // if we have no tabs left, close this window
-      if ($('.nav-tabs li').length === 0) {
-        window.close();
-      }
+    // if we have no tabs left, close this window
+    if ($('.nav-tabs li').length === 0) {
+      window.close();
     }
-  );
+  });
 
   const dragStart = ({currentTarget, originalEvent}) => {
     $(currentTarget).addClass('dragged');
 
-    originalEvent.dataTransfer.effectAllowed = 'move'
+    originalEvent.dataTransfer.effectAllowed = 'move';
     originalEvent.dataTransfer.setData('text/plain', JSON.stringify({
       model: $(currentTarget).data('model'),
       windowName: window.name
     }));
-  }
+  };
 
   const drop = ({currentTarget, originalEvent}) => {
     const dropData = JSON.parse(originalEvent.dataTransfer.getData('text/plain'));
 
     // this is a local drop, so re-order tabs
     if (dropData.windowName === window.name) {
-
       const dropElement = $(currentTarget).attr('data-target')
           ? $(currentTarget)
           : $('.nav-tabs li').last();
@@ -64,7 +59,7 @@ main(() => {
     // this is necessary to disable the browsers defualt behaviour for
     // drag / drop of this specific element type
     return false;
-  }
+  };
 
   const dragEnd = (e) => {
     $(e.currentTarget).removeClass('dragged');
@@ -80,8 +75,7 @@ main(() => {
 
     // remove any highlights (drag-leave is not fired on the final drop target)
     $('.panel-heading ul, .panel-heading a').removeClass('drag-over');
-  }
-
+  };
 
   $('.panel-heading')
     .on('dragstart', 'li', dragStart)
@@ -100,10 +94,11 @@ main(() => {
 
   $('.close-button').on('click', () => window.close());
 
-  const renderModel = (model) => {
-    model.forEach(function(tabItem, index) {
+  // render the tabs supplied by the model
+  window.getOptions(({customData}) => {
+    customData.forEach((tabItem, index) => {
       createTab(tabItem, index === 0).appendTo($('.nav-tabs'));
       createTabContent(tabItem, index === 0).appendTo($('.tab-content'));
     });
-  }
+  });
 });

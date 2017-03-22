@@ -1,4 +1,6 @@
-const { main, Window, Application, InterApplicationBus } = fin.desktop;
+/* globals lorem adaptBus fin */
+
+const { main, Window, Application } = fin.desktop;
 
 const model =
   [1, 2, 3, 4, 5]
@@ -9,7 +11,6 @@ const model =
     }));
 
 main(() => {
-
   var childIndex = 0;
 
   const application = Application.getCurrent();
@@ -24,13 +25,13 @@ main(() => {
         window.close();
       }
     });
-  }
+  };
 
   const createChildWindow = (config = {}) => {
-    const childId = "child" + childIndex++;
+    const childId = 'child' + childIndex++;
     const child = new Window({
       name: childId,
-      url: "child.html",
+      url: 'child.html',
       autoShow: true,
       saveWindowState: false,
       defaultLeft: config.position ? config.position[0] : undefined,
@@ -41,7 +42,7 @@ main(() => {
       child.addEventListener('closed', childWindowClosed);
       child.focus();
     });
-  }
+  };
 
   var dragOver = {};
 

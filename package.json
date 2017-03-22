@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "lint": "eslint **/*.js",
     "serve": "live-server --port=8080 --no-browser",
     "launch": "openfin --launch --config http://localhost:8080/app.json"
   },
@@ -16,6 +17,10 @@
     "openfin-cli": "^1.1.5"
   },
   "devDependencies": {
+    "eslint": "^3.18.0",
+    "eslint-config-standard": "^7.1.0",
+    "eslint-plugin-promise": "^3.5.0",
+    "eslint-plugin-standard": "^2.1.1",
     "live-server": "^1.2.0"
   }
 }
