@@ -9,21 +9,9 @@ main(() => {
     renderModel(customData);
   });
 
-  // wrap the inter app message bus send, adding window name to all messages
-  const busSend = (eventName, message = {}) => {
-    message.windowName = window.name;
-    InterApplicationBus.send(application.uuid, eventName, message);
-  };
+  const {send, subscribe} = adaptBus(application.uuid, window.name);
 
-  // wrap the inter app message bus subscribe, filtering only messages for this window
-  const busSubscribe = (eventName, callback) =>
-    InterApplicationBus.subscribe(application.uuid, eventName, (message) => {
-      if (message.windowName === window.name) {
-        callback(message);
-      }
-    });
-
-  busSubscribe('removeTab', (message) => {
+  subscribe('removeTab', (message) => {
       // remove from this model
       $(`.nav-tabs li[data-target='#${message.model.id}']`).remove();
       $(`.tab-content div[id='${message.model.id}']`).remove();
@@ -82,9 +70,11 @@ main(() => {
     $(e.currentTarget).removeClass('dragged');
     const dragModel = $(e.currentTarget).data('model');
 
-    busSend('dragEnd', {
+    send('dragEnd', {
       windowName: window.name,
-      position: [e.screenX, e.screenY],
+      // apply a hard-coded offset to the y position so that the tab is directly
+      // under the mouse when dropped
+      position: [e.screenX, e.screenY - 50],
       model: dragModel
     });
 
@@ -105,8 +95,8 @@ main(() => {
   // the parent so that it can track where the dragged element finally ends up
   consolidateDragEvents('.panel-heading ul');
   $('.panel-heading ul')
-    .on('consolidatedDragEnter', () => busSend('dragEnter'))
-    .on('consolidatedDragLeave', () => busSend('dragLeave'));
+    .on('consolidatedDragEnter', () => send('dragEnter'))
+    .on('consolidatedDragLeave', () => send('dragLeave'));
 
   $('.close-button').on('click', () => window.close());
 

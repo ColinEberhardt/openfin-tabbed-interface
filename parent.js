@@ -15,9 +15,7 @@ main(() => {
   const application = Application.getCurrent();
   const window = Window.getCurrent();
 
-  // bind the application uuid to the message bus methods
-  const busSend = InterApplicationBus.send.bind(null, application.uuid);
-  const busSubscribe = InterApplicationBus.subscribe.bind(null, application.uuid);
+  const {send, subscribe} = adaptBus(application.uuid);
 
   // if all the child windows close, the terminate the app
   const childWindowClosed = () => {
@@ -40,35 +38,32 @@ main(() => {
       customData: Array.isArray(config.model) ? config.model : [config.model],
       frame: false
     }, () => {
-      // for some reason the defaultLeft / defaultTop above are not working
-      // if (config.position) {
-      //   child.moveTo(config.position[0], config.position[1]);
-      // }
       child.addEventListener('closed', childWindowClosed);
+      child.focus();
     });
   }
 
   var dragOver = {};
 
   // track drag enter / drag leave so that we know where the drop occured
-  busSubscribe('dragEnter', (message) => {
+  subscribe('dragEnter', (message) => {
     dragOver[message.windowName] = true;
   });
 
-  busSubscribe('dragLeave', (message) => {
+  subscribe('dragLeave', (message) => {
     delete dragOver[message.windowName];
   });
 
-  busSubscribe('dragEnd', (message) => {
+  subscribe('dragEnd', (message) => {
     // if the end drag location isn't over any of our windows, create a new one
     if (Object.keys(dragOver).length === 0) {
-      busSend('removeTab', message);
+      send('removeTab', message);
       createChildWindow(message);
     } else {
       // if the end is not the source, remove from the old
       const endWindow = Object.keys(dragOver)[0];
       if (endWindow !== message.windowName) {
-        busSend('removeTab', message);
+        send('removeTab', message);
       }
     }
     dragOver = {};
