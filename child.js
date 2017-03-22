@@ -1,118 +1,119 @@
-var model = {
-  tabs: [
-    { id: 'message', title: 'Messages', content: 'foo bar '},
-    { id: 'profile', title: 'Profile', content: 'foo bar 2'},
-    { id: 'settings', title: 'Settings', content: 'foo bar 3'}
-  ],
-  selectedTabIndex: 1
-}
+const { main, Window, Application, InterApplicationBus } = fin.desktop;
 
-function renderModel() {
 
-  var tabs = $('.nav-tabs');
-  var tabContent = $('.tab-content');
-  tabs.empty();
-  tabContent.empty();
-  model.tabs.forEach(function(tabItem, index) {
-    $('<li>', {
-      'role': 'presentation',
-      'class': index === model.selectedTabIndex ? 'active' : '',
-      'html': $('<a>', {
-        'role': 'tab',
-        'data-toggle': 'tab',
-        'draggable': true,
-        'data-target': '#' + tabItem.id
-      }).text(tabItem.title)
-    }).appendTo(tabs);
-    $('<div>', {
-      'role': 'tabpanel',
-      'id': tabItem.id,
-      'class': 'tab-pane ' + (index === model.selectedTabIndex ? 'active' : '')
-    }).text(tabItem.content).appendTo(tabContent);
-  });
-}
+main(() => {
+  const application = Application.getCurrent();
+  const window = Window.getCurrent();
 
-renderModel();
-
-$('.tabs a').click(function (e) {
-  e.preventDefault()
-  $(this).tab('show')
-})
-
-var dragSrcEl = null;
-
-function handleDragStart(e) {
-  this.style.opacity = '0.4';  // this / e.target is the source node.
-
-  dragSrcEl = this;
-
-  e.dataTransfer.effectAllowed = 'move';
-  e.dataTransfer.setData('text', 'fishy');
-}
-
-function handleDragOver(e) {
-  if (e.preventDefault) {
-    e.preventDefault(); // Necessary. Allows us to drop.
-  }
-
-  e.dataTransfer.dropEffect = 'move';  // See the section on the DataTransfer object.
-
-  return false;
-}
-
-function handleDragEnter(e) {
-  this.classList.add('over');
-}
-
-function handleDragLeave(e) {
-  this.classList.remove('over');
-}
-
-function handleDrop(e) {
-  // this / e.target is current target element.
-  if (e.stopPropagation) {
-    e.stopPropagation(); // stops the browser from redirecting.
-  }
-
-  // Don't do anything if dropping the same column we're dragging.
-  if (dragSrcEl != this) {
-    console.log(e.dataTransfer.getData('text'));
-  }
-
-  return false;
-}
-
-function greet() {
-  return "I am a child!";
-}
-
-function handleDragEnd(e) {
-  // this/e.target is the source node.
-  this.style.opacity = '1.0';
-
-  console.log(e.screenX, e.screenY);
-
-  [].forEach.call(cols, function (col) {
-    col.classList.remove('over');
+  window.getOptions(({customData}) => {
+    renderModel(customData);
   });
 
-  fin.desktop.InterApplicationBus.send(
-      fin.desktop.Application.getCurrent().uuid,
-      'createChildWindow',
-      { position: [e.screenX, e.screenY] }
+  // wrap the inter app message bus send, adding window name to all messages
+  const busSend = (eventName, message = {}) => {
+    message.windowName = window.name;
+    InterApplicationBus.send(application.uuid, eventName, message);
+  };
+
+  // wrap the inter app message bus subscribe, filtering only messages for this window
+  const busSubscribe = (eventName, callback) =>
+    InterApplicationBus.subscribe(application.uuid, eventName, (message) => {
+      if (message.windowName === window.name) {
+        callback(message);
+      }
+    });
+
+  busSubscribe('removeTab', (message) => {
+      // remove from this model
+      $(`.nav-tabs li[data-target='#${message.model.id}']`).remove();
+      $(`.tab-content div[id='${message.model.id}']`).remove();
+
+      // if we have no tabs left, close this window
+      if ($('.nav-tabs li').length === 0) {
+        window.close();
+      }
+    }
   );
-}
 
-var cols = document.querySelectorAll('.tabs li');
-[].forEach.call(cols, function(col) {
-  col.addEventListener('dragstart', handleDragStart, false);
-  col.addEventListener('dragenter', handleDragEnter, false)
-  col.addEventListener('dragover', handleDragOver, false);
-  col.addEventListener('dragleave', handleDragLeave, false);
-  col.addEventListener('drop', handleDrop, false);
-  col.addEventListener('dragend', handleDragEnd, false);
-});
+  const dragStart = ({currentTarget, originalEvent}) => {
+    $(currentTarget).addClass('dragged');
 
-fin.desktop.main(function() {
-  console.log('desktop initialised');
+    originalEvent.dataTransfer.effectAllowed = 'move'
+    originalEvent.dataTransfer.setData('text/plain', JSON.stringify({
+      model: $(currentTarget).data('model'),
+      windowName: window.name
+    }));
+  }
+
+  const drop = ({currentTarget, originalEvent}) => {
+    const dropData = JSON.parse(originalEvent.dataTransfer.getData('text/plain'));
+
+    // this is a local drop, so re-order tabs
+    if (dropData.windowName === window.name) {
+
+      const dropElement = $(currentTarget).attr('data-target')
+          ? $(currentTarget)
+          : $('.nav-tabs li').last();
+
+      const dragElement = $(`.nav-tabs li[data-target='#${dropData.model.id}']`);
+
+      if (dragElement.index() < dropElement.index()) {
+        dropElement.after(dragElement);
+      } else {
+        dragElement.before(dropElement);
+      }
+    } else {
+      // this is a drop from another window
+
+      // TODO: Drop in the right location
+      const modelObject = dropData.model;
+      createTab(modelObject).appendTo($('.nav-tabs'));
+      createTabContent(modelObject).appendTo($('.tab-content'));
+    }
+
+    $('.panel-heading ul, .panel-heading a').removeClass('drag-over');
+
+    // this is necessary to disable the browsers defualt behaviour for
+    // drag / drop of this specific element type
+    return false;
+  }
+
+  const dragEnd = (e) => {
+    $(e.currentTarget).removeClass('dragged');
+    const dragModel = $(e.currentTarget).data('model');
+
+    busSend('dragEnd', {
+      windowName: window.name,
+      position: [e.screenX, e.screenY],
+      model: dragModel
+    });
+
+    // remove any highlights (drag-leave is not fired on the final drop target)
+    $('.panel-heading ul, .panel-heading a').removeClass('drag-over');
+  }
+
+
+  $('.panel-heading')
+    .on('dragstart', 'li', dragStart)
+    .on('dragend', 'li', dragEnd)
+    .on('drop', 'li, ul', drop)
+    .on('dragleave', 'li, ul', ({target}) => $(target).removeClass('drag-over'))
+    .on('dragenter', 'li, ul', ({target}) => $(target).addClass('drag-over'))
+    .on('dragover', 'li, ul', () => false);
+
+  // when drag enter / leave fires on the outer container, send this data to
+  // the parent so that it can track where the dragged element finally ends up
+  consolidateDragEvents('.panel-heading ul');
+  $('.panel-heading ul')
+    .on('consolidatedDragEnter', () => busSend('dragEnter'))
+    .on('consolidatedDragLeave', () => busSend('dragLeave'));
+
+  $('.close-button').on('click', () => window.close());
+
+  const renderModel = (model) => {
+    model.forEach(function(tabItem, index) {
+      createTab(tabItem, index === 0).appendTo($('.nav-tabs'));
+      createTabContent(tabItem, index === 0).appendTo($('.tab-content'));
+    });
+  }
 });
