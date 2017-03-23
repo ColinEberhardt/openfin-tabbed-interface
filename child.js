@@ -1,4 +1,4 @@
-/* globals adaptBus createTab createTabContent fin consolidateDragEvents */
+/* globals adaptBus createTab createTabContent fin */
 
 const { main, Window, Application } = fin.desktop;
 
@@ -57,6 +57,8 @@ main(() => {
       createTabContent(modelObject).appendTo($('.tab-content'));
     }
 
+    send('dragdrop');
+
     $('.panel-heading ul, .panel-heading a').removeClass('drag-over');
 
     // this is necessary to disable the browsers defualt behaviour for
@@ -68,8 +70,7 @@ main(() => {
     $(e.currentTarget).removeClass('dragged');
     const dragModel = $(e.currentTarget).data('model');
 
-    send('dragEnd', {
-      windowName: window.name,
+    send('dragend', {
       // apply a hard-coded offset to the y position so that the tab is directly
       // under the mouse when dropped
       position: [e.screenX, e.screenY - 50],
@@ -87,11 +88,6 @@ main(() => {
     .on('dragleave', 'li, ul', ({target}) => $(target).removeClass('drag-over'))
     .on('dragenter', 'li, ul', ({target}) => $(target).addClass('drag-over'))
     .on('dragover', 'li, ul', () => false);
-
-  consolidateDragEvents('.panel-heading ul');
-  $('.panel-heading ul')
-    .on('consolidatedDragEnter', () => send('dragEnter'))
-    .on('consolidatedDragLeave', () => send('dragLeave'));
 
   $('.close-button').on('click', () => window.close());
 

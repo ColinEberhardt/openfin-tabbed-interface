@@ -18,7 +18,7 @@ main(() => {
 
   const {send, subscribe} = adaptBus(application.uuid);
 
-  // if all the child windows close, the terminate the app
+  // if all the child windows close, then terminate the app
   const childWindowClosed = () => {
     application.getChildWindows(children => {
       if (children.length === 0) {
@@ -44,30 +44,26 @@ main(() => {
     });
   };
 
-  var dragOver = {};
+  let droppedWindow = null;
 
-  // track drag enter / drag leave so that we know where the drop occured
-  subscribe('dragEnter', (message) => {
-    dragOver[message.windowName] = true;
+  subscribe('dragdrop', (message) => {
+    droppedWindow = message.windowName;
   });
 
-  subscribe('dragLeave', (message) => {
-    delete dragOver[message.windowName];
-  });
-
-  subscribe('dragEnd', (message) => {
-    // if the end drag location isn't over any of our windows, create a new one
-    if (Object.keys(dragOver).length === 0) {
+  subscribe('dragend', (message) => {
+    // if we do not know where the tab was dropped, it must be outside of the app
+    // so create a ne window
+    if (!droppedWindow) {
       send('removeTab', message);
       createChildWindow(message);
     } else {
-      // if the end is not the source, remove from the old
-      const endWindow = Object.keys(dragOver)[0];
-      if (endWindow !== message.windowName) {
+      // if the tab was dropped on a different window to the source
+      // remove the tab
+      if (droppedWindow !== message.windowName) {
         send('removeTab', message);
       }
     }
-    dragOver = {};
+    droppedWindow = null;
   });
 
   // create the first app window
