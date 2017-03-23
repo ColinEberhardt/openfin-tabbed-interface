@@ -88,8 +88,6 @@ main(() => {
     .on('dragenter', 'li, ul', ({target}) => $(target).addClass('drag-over'))
     .on('dragover', 'li, ul', () => false);
 
-  // when drag enter / leave fires on the outer container, send this data to
-  // the parent so that it can track where the dragged element finally ends up
   consolidateDragEvents('.panel-heading ul');
   $('.panel-heading ul')
     .on('consolidatedDragEnter', () => send('dragEnter'))

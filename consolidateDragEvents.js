@@ -18,5 +18,7 @@ const consolidateDragEvents = (selector) => {
         $(currentTarget).trigger('consolidatedDragEnter');
       }
     })
-    .on('drop dragstart', () => { counter = 0; });
+    .on('drop dragstart', () => {
+      counter = 0;
+    });
 };
