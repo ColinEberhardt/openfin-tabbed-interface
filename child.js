@@ -26,14 +26,14 @@ main(() => {
     $(currentTarget).addClass('dragged');
 
     originalEvent.dataTransfer.effectAllowed = 'move';
-    originalEvent.dataTransfer.setData('text/plain', JSON.stringify({
+    originalEvent.dataTransfer.setData('text/-openfin-state', JSON.stringify({
       model: $(currentTarget).data('model'),
       windowName: window.name
     }));
   };
 
   const drop = ({currentTarget, originalEvent}) => {
-    const dropData = JSON.parse(originalEvent.dataTransfer.getData('text/plain'));
+    const dropData = JSON.parse(originalEvent.dataTransfer.getData('text/-openfin-state'));
 
     // this is a local drop, so re-order tabs
     if (dropData.windowName === window.name) {
