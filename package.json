@@ -9,8 +9,8 @@
     "launch": "openfin --launch --config http://localhost:8080/app.json",
     "start": "npm-run-all --parallel serve launch"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Colin Eberhardt",
+  "license": "MIT",
   "dependencies": {
     "bootstrap": "^3.3.7",
     "jquery": "^3.1.1",
