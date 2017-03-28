@@ -52,7 +52,7 @@ main(() => {
 
   subscribe('dragend', (message) => {
     // if we do not know where the tab was dropped, it must be outside of the app
-    // so create a ne window
+    // so create a new window
     if (!droppedWindow) {
       send('removeTab', message);
       createChildWindow(message);
